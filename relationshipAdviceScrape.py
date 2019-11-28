@@ -25,7 +25,7 @@ post_dict = {   'title':[],\
                 }
 
 n = 0
-for submission in subreddit.top(limit=100):
+for submission in subreddit.hot(limit=None):
     if search('update', submission.title.lower()):
         pass
     elif (search('\[', submission.title)) or (search('\(', submission.title)):
@@ -49,6 +49,23 @@ post_df = pd.DataFrame(post_dict)
 post_df['age'] = post_df['ageParenth'] + post_df['ageBracket']
 post_df['gender'] = post_df['genderParenth'] + post_df['genderBracket']
 
+#!Start Debug
+#TODO: Figure out how to get more than ~500 submissions 
+#* Probably need to loop through and pull by UTC submission time
+test_dict = {
+        'submission': [],\
+        'createdUTC': [],\
+}
+for submission in subreddit.new(limit=10):
+        test_dict['submission'].append(submission.id)
+        test_dict['createdUTC'].append(submission.created_utc)
+test_df = pd.DataFrame(test_dict)
+test_df.to_csv('test_df.csv',index=False)
+print('Total Submissions(dict): '+str(len(test_dict)))
+print('Total Submissions(df): '+str(range(test_df)))
+print('Starting with '+str(len(post_df))+' total lines')
+#!End Debug
+
 # Combine all the lists into one big list for Age
 allAges = []
 rowNumber = 0
@@ -63,20 +80,40 @@ for rows in post_df['gender']:
         rowNumber += 1
 allGenders = [x.upper() for x in allGenders]
 
+age_df = pd.DataFrame()
+gender_df = pd.DataFrame()
+
+age_df['age'] = allAges
+age_df['age'].fillna('999')
+gender_df['gender'] = allGenders
+#TODO: This gives an error right now since some post as (18) instead of (18f)
+#TODO: Fill missing genders with NA
 ageGender_df = pd.DataFrame()
-ageGender_df['age'] = allAges
-ageGender_df['gender'] = allGenders
+ageGender_df['age'] = age_df['age']
+ageGender_df['gender'] = gender_df['gender'].astype('str')
+ageGender_df['gender'] = ageGender_df['gender'].fillna('N/A')
 ageGender_df['age'] = ageGender_df['age'].astype('int')
+
+#!Start Debug
+# rowNumber = 0 
+# for line in ageGender_df['age']:
+#         if '45' in line:
+#                 print(str(ageGender_df['age'][rowNumber])+str(ageGender_df['gender'][rowNumber]))
+#         rowNumber +=1
+# ageGender_df.to_csv('ageGender.csv',index=False)
+# print(ageGender_df.dtypes)
+#!End Debug
 
 # Plot it all
 fix, axes = plt.subplots(nrows=2, ncols=2)
 
-plt.subplot(3,1,1)
+plt.subplot(2,1,1)
+plt.title('Age Distribution of /r/relationships')
 plt.xlabel('Age')
 plt.ylabel('Count of Age')
-plt.plot(ageGender_df['age'])
+plt.hist(ageGender_df['age'])
 
-plt.subplot(3,1,2)
+plt.subplot(2,1,2)
 plt.xlabel('Gender')
 plt.ylabel('Count of Gender')
 plt.hist(ageGender_df['gender'])

@@ -1,7 +1,6 @@
-# TODO: Illustrate M v F age ranges 
-# TODO: How to split 23m into 23 and m from [23m] 
-#! Current problems:
-#! ageGender shows a tuple(?) inside of the column
+
+#! PRAW Doesn't allow more than 1k submissions per request. 
+#! this needs to be done through pushshift.io
 
 import praw
 import pandas as pd
@@ -31,7 +30,6 @@ for submission in subreddit.hot(limit=None):
     elif (search('\[', submission.title)) or (search('\(', submission.title)):
         post_dict['title'].append(submission.title)
         post_dict['url'].append(submission.url)
-        #TODO: might need a loop to go through all matches and put them in seperate rows
         post_dict['ageGenderBracket'].append(re.findall(r'\[(.*?)\]', submission.title))
         post_dict['ageGenderParenth'].append(re.findall(r'\((.*?)\)',submission.title))
         # Seperate brackets
@@ -56,7 +54,7 @@ test_dict = {
         'submission': [],\
         'createdUTC': [],\
 }
-for submission in subreddit.new(limit=10):
+for submission in subreddit.new(limit=10,):
         test_dict['submission'].append(submission.id)
         test_dict['createdUTC'].append(submission.created_utc)
 test_df = pd.DataFrame(test_dict)
@@ -86,8 +84,6 @@ gender_df = pd.DataFrame()
 age_df['age'] = allAges
 age_df['age'].fillna('999')
 gender_df['gender'] = allGenders
-#TODO: This gives an error right now since some post as (18) instead of (18f)
-#TODO: Fill missing genders with NA
 ageGender_df = pd.DataFrame()
 ageGender_df['age'] = age_df['age']
 ageGender_df['gender'] = gender_df['gender'].astype('str')
